@@ -1,0 +1,6 @@
+# storage parameter
+Tennis_Linux: 'UnityEnvs/Tennis_Linux/Tennis.x86_64'
+
+# training params
+LearningRate: 1e-4
+BatchesSize: 64
