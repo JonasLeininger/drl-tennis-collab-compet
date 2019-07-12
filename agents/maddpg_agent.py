@@ -9,13 +9,14 @@ from models.noise import Noise
 from replay_buffer import ReplayBuffer
 
 
-class DDPGAgent():
+class MADDPGAgent():
 
-    def __init__(self, config):
+    def __init__(self, config, id):
         self.config = config
-        self.checkpoint_path_actor = "checkpoints/maddpg/cp-actor-{epoch:04d}.pt"
-        self.checkpoint_path_critic = "checkpoints/maddpg/cp-critic-{epoch:04d}.pt"
-        self.episodes = 1000
+        self.id = id
+        self.checkpoint_path_actor = "checkpoints/maddpg/cp-actor-{id:02d}-{epoch:04d}.pt"
+        self.checkpoint_path_critic = "checkpoints/maddpg/cp-critic-{id:02d}-{epoch:04d}.pt"
+        self.episodes = 2
         self.env_info = None
         self.env_agents = None
         self.states = None
@@ -23,7 +24,7 @@ class DDPGAgent():
         self.loss = None
         self.gamma = 0.99
         self.tau = 0.001
-        self.batch_size = self.config.config['BatchesSizeDDPG']
+        self.batch_size = self.config.config['BatchesSizeMADDPG']
         self.memory = ReplayBuffer(100000, self.batch_size)
         self.learn_every = 20
         self.num_learn = 20
@@ -38,40 +39,15 @@ class DDPGAgent():
                                                  # weight_decay=0.0000
                                                  )
         self.seed = random.seed(16)
-        self.noise = Noise(4, self.seed)
+        self.noise = Noise(2, self.seed)
         self.scores = []
         self.scores_agent_mean = []
 
     def run_agent(self):
-        for step in range(self.episodes):
-            print("Episonde {}/{}".format(step, self.episodes))
-            self.env_info = self.config.env.reset(train_mode=True)[self.config.brain_name]
-            self.env_agents = self.env_info.agents
-            self.states = self.env_info.vector_observations
-            self.dones = self.env_info.local_done
-            self.run_training()
-            print("Average score from 20 agents: >> {:.2f} <<".format(self.scores_agent_mean[-1]))
-            if (step+1)%10==0:
-                self.save_checkpoint(step+1)
-                np.save(file="checkpoints/maddpg/maddpg_save_dump.npy", arr=np.asarray(self.scores))
+        self.run_training()
 
-            if (step + 1) >= 100:
-                self.mean_of_mean = np.mean(self.scores_agent_mean[-100:])
-                print("Mean of the last 100 episodes: {:.2f}".format(self.mean_of_mean))
-                if self.mean_of_mean>=0.5:
-                    print("Solved the environment after {} episodes with a mean of {:.2f}".format(step, self.mean_of_mean))
-                    np.save(file="checkpoints/maddpg/maddpg_final.npy", arr=np.asarray(self.scores))
-                    self.save_checkpoint(step+1)
-                    break
-
-    def run_training(self):
-        scores = np.zeros((2))
-        self.noise.reset()
-
-        print("Agent scores:")
-        print(scores)
-        self.scores.append(scores)
-        self.scores_agent_mean.append(scores.mean())
+    def train(self):
+        pass
 
     def act(self, states, add_noise=True):
         states = torch.tensor(states, dtype=torch.float, device=self.actor_local.device)

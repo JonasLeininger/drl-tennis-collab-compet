@@ -1,7 +1,9 @@
 # storage parameter
-Tennis_Linux: 'UnityEnvs/Tennis_Linux/Tennis.x86_64'
+Tennis: 'UnityEnvs/Tennis_Linux/Tennis.x86_64'
 
-# training params
+# training params MADDPG
+Episodes: 30
+BufferSize: 10000
 LearningRateActor: 1e-4
 LearningRateCritic: 3e-4
-BatchesSize: 512
+BatchesSizeMADDPG: 30

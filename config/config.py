@@ -9,7 +9,10 @@ class Config:
         self.config = self.load_config_file()
         self.learning_rate_actor = float(self.config['LearningRateActor'])
         self.learning_rate_critic = float(self.config['LearningRateCritic'])
-        self.env = UnityEnvironment(file_name=self.config['Tennis_Linux'])
+        self.num_episodes = int(self.config['Episodes'])
+        self.buffer_size = int(self.config['BufferSize'])
+        self.batch_size = int(self.config['BatchesSizeMADDPG'])
+        self.env = UnityEnvironment(file_name=self.config['Tennis'])
         self.init_env()
 
     def load_config_file(self, config_file: str = 'config/config.yaml'):
@@ -26,6 +29,6 @@ class Config:
         self.states = self.env_info.vector_observations
         self.state_dim = self.states.shape[1]
         self.action_dim = self.brain.vector_action_space_size
-    
+
     def close_env(self):
         self.env.close()
