@@ -2,5 +2,6 @@
 Tennis_Linux: 'UnityEnvs/Tennis_Linux/Tennis.x86_64'
 
 # training params
-LearningRate: 1e-4
-BatchesSize: 64
+LearningRateActor: 1e-4
+LearningRateCritic: 3e-4
+BatchesSize: 512

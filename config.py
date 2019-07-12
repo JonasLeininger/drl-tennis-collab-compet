@@ -7,7 +7,8 @@ class Config:
     def __init__(self):
         self.device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
         self.config = self.load_config_file()
-        self.learning_rate = float(self.config['LearningRate'])
+        self.learning_rate_actor = float(self.config['LearningRateActor'])
+        self.learning_rate_critic = float(self.config['LearningRateCritic'])
         self.env = UnityEnvironment(file_name=self.config['Tennis_Linux'])
         self.init_env()
 
