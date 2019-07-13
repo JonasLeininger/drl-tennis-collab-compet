@@ -8,8 +8,8 @@ class MADDPGCritic(nn.Module):
     def __init__(self, config, hidden_units=(512, 256)):
         super(MADDPGCritic, self).__init__()
         self.fc1 = nn.Linear(config.state_dim * 2, hidden_units[0])
-        # self.bn1 = nn.BatchNorm1d(hidden_units[0])
-        self.fc2 = nn.Linear(hidden_units[0] + config.action_dim, hidden_units[1])
+        self.bn1 = nn.BatchNorm1d(hidden_units[0])
+        self.fc2 = nn.Linear(hidden_units[0] + config.action_dim*2, hidden_units[1])
         self.fc3 = nn.Linear(hidden_units[1], 1)
         self.reset_parameters()
         self.device = config.device

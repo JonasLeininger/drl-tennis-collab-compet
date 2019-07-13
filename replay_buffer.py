@@ -18,10 +18,18 @@ class ReplayBuffer(object):
         self.experience = namedtuple("Experience", field_names=["state1", "state2", "action1", "action2", "reward",
                                                                 "next_state1", "next_state2", "done"])
 
-    def add(self, state_1, state_2, action_1, action_2, rewards, next_state_1, next_state_2, dones):
-        for state1, state2, action1, action2, reward, next_state1, next_state2, done in zip(state_1, state_2, action_1, action_2,
-                                                           rewards, next_state_1, next_state_2, dones):
-            e = self.experience(state1, state2, action1, action2, reward, next_state1, next_state2, done)
+    def add(self, state_1, state_2, action_1, action_2, rewards, next_state_1, next_state_2, dones):            
+            state_1 = state_1.reshape((-1, state_1.shape[0]))
+            state_2 = state_2.reshape((-1, state_2.shape[0]))
+            action_1 = action_1.reshape((-1, action_1.shape[0]))
+            action_2 = action_2.reshape((-1, action_2.shape[0]))
+            next_state_1 = next_state_1.reshape((-1, next_state_1.shape[0]))
+            next_state_2 = next_state_2.reshape((-1, next_state_2.shape[0]))
+
+            e = self.experience(state_1, state_2, action_1, action_2, 
+                np.array(rewards).reshape(-1,), 
+                next_state_1, next_state_2, 
+                dones)
             self.memory.append(e)
 
     def sample(self):

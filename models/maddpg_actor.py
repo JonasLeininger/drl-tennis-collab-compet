@@ -8,7 +8,7 @@ class MADDPGActor(nn.Module):
     def __init__(self, config, hidden_units=(512, 256)):
         super(MADDPGActor, self).__init__()
         self.fc1 = nn.Linear(config.state_dim, hidden_units[0])
-        # self.bn1 = nn.BatchNorm1d(hidden_units[0])
+        self.bn1 = nn.BatchNorm1d(hidden_units[0])
         self.fc2 = nn.Linear(hidden_units[0], hidden_units[1])
         self.fc3 = nn.Linear(hidden_units[1], config.action_dim)
         self.reset_parameters()

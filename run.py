@@ -1,4 +1,5 @@
 import numpy as np
+import torch
 
 from config.config import Config
 from agents.maddpg_agent import MADDPGAgent
@@ -10,7 +11,7 @@ def main():
     agent2 = MADDPGAgent(config, 2)
     replay = ReplayBuffer(config.buffer_size, config.batch_size)
     print_env_information(config)
-    run_random_env(config)
+    # run_random_env(config)
     run_training(config, agent1, agent2, replay)
 
 
@@ -94,8 +95,55 @@ def run_training(config, agent1, agent2, replay):
 def train_agents(agent1, agent2, replay):
     experience = replay.sample()
     state1, state2, action1, action2, rewards, next_state1, next_state2, dones = experience
-    # agent1.train()
+    critic_full_next_action = torch.zeros((action1.shape[0], action1.shape[1]*2))
+    critic_full_next_action[..., :2] = agent1.actor_target(next_state1)
+    critic_full_next_action[..., 2:] = agent1.actor_target(next_state2)
+
+    actor_full_actions = torch.zeros((action1.shape[0], action1.shape[1]*2))
+    actor_full_actions[..., :2] = action1.clone()
+    actor_full_actions[..., 2:] = action2.clone()
+
+    actor_full_actions[..., :2] = agent1.actor_local(state1)
+    
+    full_actions = torch.zeros((action1.shape[0], action1.shape[1]*2))
+    full_actions[..., :2] = action1.clone()
+    full_actions[..., 2:] = action2.clone()
+
+    agent1_reward = rewards[...,0]
+    agent1_dones = dones[...,0]
+
+    exp_1 = (state1, state2, actor_full_actions, full_actions, 
+        agent1_reward, agent1_dones, next_state1, next_state2, critic_full_next_action)
+    
+    agent1.learn(exp_1)
+
+    experience = replay.sample()
+    state1, state2, action1, action2, rewards, next_state1, next_state2, dones = experience
+    critic_full_next_action = torch.zeros((action1.shape[0], action1.shape[1]*2))
+    critic_full_next_action[..., :2] = agent1.actor_target(next_state1)
+    critic_full_next_action[..., 2:] = agent1.actor_target(next_state2)
+
+    actor_full_actions = torch.zeros((action1.shape[0], action1.shape[1]*2))
+    actor_full_actions[..., :2] = action1.clone()
+    actor_full_actions[..., 2:] = action2.clone()
+
+    actor_full_actions[..., :2] = agent2.actor_local(state2)
+    
+    full_actions = torch.zeros((action1.shape[0], action1.shape[1]*2))
+    full_actions[..., :2] = action1.clone()
+    full_actions[..., 2:] = action2.clone()
+
+    agent2_reward = rewards[...,1]
+    agent2_dones = dones[...,1]
+
+    exp_2 = (state1, state2, actor_full_actions, full_actions, 
+        agent2_reward, agent2_dones, next_state1, next_state2, critic_full_next_action)
+    
+    agent2.learn(exp_2)
+
     # agent2.train()
+
+# def train_agent(agent, oponent, )
 
 if __name__=='__main__':
     main()
