@@ -5,7 +5,7 @@ import torch.nn as nn
 
 class MADDPGCritic(nn.Module):
 
-    def __init__(self, config, hidden_units=(256, 128)):
+    def __init__(self, config, hidden_units=(512, 256)):
         super(MADDPGCritic, self).__init__()
         self.fc1 = nn.Linear(config.state_dim * 2, hidden_units[0])
         self.bn1 = nn.BatchNorm1d(hidden_units[0])
