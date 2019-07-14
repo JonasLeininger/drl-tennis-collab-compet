@@ -6,6 +6,7 @@ import random
 from models.maddpg_actor import MADDPGActor
 from models.maddpg_critic import MADDPGCritic
 from models.noise import Noise
+from models.gaussian_noise import GaussianNoise
 from replay_buffer import ReplayBuffer
 
 
@@ -40,7 +41,8 @@ class MADDPGAgent():
                                                  # weight_decay=0.0000
                                                  )
         self.seed = random.seed(16)
-        self.noise = Noise(2, self.seed)
+        # self.noise = Noise(2, self.seed)
+        self.noise = GaussianNoise(2)
         self.scores = []
         self.scores_agent_mean = []
 
@@ -65,13 +67,13 @@ class MADDPGAgent():
         return np.clip(action, -1, 1)
 
     def learn(self, experience):
-        state1, state2, actor_full_actions, full_actions, agent1_reward, dones, next_state1, next_state2, critic_full_next_action = experience
+        state1, state2, actor_full_actions, full_actions, agent_reward, dones, next_state1, next_state2, critic_full_next_action = experience
         full_states = torch.zeros((state1.shape[0], state1.shape[1]*2)).to(self.device)
         full_states[..., :24] = state1.clone()
         full_states[..., 24:] = state2.clone()
 
         q_targets_next = self.critic_target(full_states, critic_full_next_action.to(self.device))
-        q_targets = agent1_reward + (self.gamma * q_targets_next * (1- dones))
+        q_targets = agent_reward + (self.gamma * q_targets_next * (1- dones))
         q_expected = self.critic_local(full_states, full_actions.to(self.device))
         critic_loss = F.mse_loss(q_expected, q_targets)
 

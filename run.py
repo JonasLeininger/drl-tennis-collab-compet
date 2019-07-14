@@ -34,6 +34,7 @@ def run_random_env(config):
         actions = np.random.randn(config.num_agents, config.action_dim)
         actions = np.clip(actions, -1, 1)
         print(actions)
+        print(actions.shape)
         env_info = config.env.step(actions)[config.brain_name]
         next_states = env_info.vector_observations
         rewards = env_info.rewards
@@ -56,26 +57,33 @@ def run_training(config, agent1, agent2, replay):
         states = env_info.vector_observations
         scores = np.zeros(config.num_agents)
         while True:
-            actions = np.random.randn(config.num_agents, config.action_dim)
-            actions = np.clip(actions, -1, 1)
+            action1 = agent1.act(states[0])
+            action2 = agent2.act(states[1])
+            actions = np.vstack((action1, action2))
+            # actions = np.clip(actions, -1, 1)
             env_info = config.env.step(actions)[config.brain_name]
             next_states = env_info.vector_observations
             rewards = env_info.rewards
             dones = env_info.local_done
-            scores += env_info.rewards
+            # print(rewards)
+            scores = np.add(scores, np.asarray(rewards))
+            # print(scores)
 
-            replay.add(states[0], states[0],
+            replay.add(states[0], states[1],
                        actions[0], actions[1],
                        rewards,
                        next_states[0], next_states[1],
                        dones)
-            if len(replay.memory) > config.batch_size:
-                train_agents(agent1, agent2, replay)
+            if (len(replay.memory) > config.batch_size) and (episode > 300):
+                for _ in range(3):
+                    train_agents(agent1, agent2, replay)
 
             states = next_states
 
             if np.any(dones):
                 break
+        agent1.noise.reset()
+        agent2.noise.reset()
         print(scores)
         l_scores.append(scores)
         # print("Average score from 20 agents: >> {:.2f} <<".format(scores_agent_mean[-1]))
@@ -109,8 +117,8 @@ def train_agents(agent1, agent2, replay):
     full_actions[..., :2] = action1.clone()
     full_actions[..., 2:] = action2.clone()
 
-    agent1_reward = rewards[...,0]
-    agent1_dones = dones[...,0]
+    agent1_reward = rewards[...,0].view(rewards.shape[0], 1)
+    agent1_dones = dones[...,0].view(rewards.shape[0], 1)
 
     exp_1 = (state1, state2, actor_full_actions, full_actions, 
         agent1_reward, agent1_dones, next_state1, next_state2, critic_full_next_action)
@@ -133,8 +141,8 @@ def train_agents(agent1, agent2, replay):
     full_actions[..., :2] = action1.clone()
     full_actions[..., 2:] = action2.clone()
 
-    agent2_reward = rewards[...,1]
-    agent2_dones = dones[...,1]
+    agent2_reward = rewards[...,1].view(rewards.shape[0], 1)
+    agent2_dones = dones[...,1].view(rewards.shape[0], 1)
 
     exp_2 = (state1, state2, actor_full_actions, full_actions, 
         agent2_reward, agent2_dones, next_state1, next_state2, critic_full_next_action)
