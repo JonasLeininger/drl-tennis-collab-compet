@@ -2,8 +2,8 @@
 Tennis: 'UnityEnvs/Tennis_Linux/Tennis.x86_64'
 
 # training params MADDPG
-Episodes: 3000
-BufferSize: 10000
+Episodes: 5000
+BufferSize: 100000
 LearningRateActor: 1e-3
-LearningRateCritic: 3e-3
-BatchesSizeMADDPG: 1024
+LearningRateCritic: 1e-3
+BatchesSizeMADDPG: 512

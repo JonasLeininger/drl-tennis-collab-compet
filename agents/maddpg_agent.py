@@ -23,10 +23,10 @@ class MADDPGAgent():
         self.states = None
         self.dones = None
         self.loss = None
-        self.gamma = 0.99
-        self.tau = 0.001
+        self.gamma = 0.95
+        self.tau = 0.01
         self.batch_size = self.config.config['BatchesSizeMADDPG']
-        self.memory = ReplayBuffer(100000, self.batch_size)
+        self.memory = ReplayBuffer(self.config.config['BufferSize'], self.batch_size)
         self.learn_every = 20
         self.num_learn = 20
         self.device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
@@ -38,11 +38,11 @@ class MADDPGAgent():
                                                 lr=float(self.config.config['LearningRateActor']))
         self.optimizer_critic = torch.optim.Adam(self.critic_local.parameters(),
                                                  lr=float(self.config.config['LearningRateCritic']),
-                                                 # weight_decay=0.0000
+                                                 weight_decay=0.0
                                                  )
-        self.seed = random.seed(16)
-        # self.noise = Noise(2, self.seed)
-        self.noise = GaussianNoise(2)
+        self.seed = random.seed(48)
+        self.noise = Noise(2, self.seed)
+        # self.noise = GaussianNoise(2)
         self.scores = []
         self.scores_agent_mean = []
 
@@ -99,14 +99,22 @@ class MADDPGAgent():
         for target_param, local_param in zip(target_model.parameters(), local_model.parameters()):
             target_param.data.copy_(self.tau*local_param.data + (1.0-self.tau)*target_param.data)
 
+    def hard_update_all(self):
+        self.hard_update(self.critic_local, self.critic_target)
+        self.hard_update(self.actor_local, self.actor_target)
+
+    def hard_update(self, local_model, target_model):
+        for target_param, local_param in zip(target_model.parameters(), local_model.parameters()):
+            target_param.data.copy_(local_param.data)
+
     def save_checkpoint(self, epoch: int):
         torch.save({
             'epoch': epoch,
             'model_state_dict': self.actor_target.state_dict(),
             'optimizer_state_dict': self.optimizer_actor.state_dict()
-        }, self.checkpoint_path_actor.format(epoch=epoch))
+        }, self.checkpoint_path_actor.format(id=self.id, epoch=epoch))
         torch.save({
             'epoch': epoch,
             'model_state_dict': self.critic_target.state_dict(),
             'optimizer_state_dict': self.optimizer_critic.state_dict()
-        }, self.checkpoint_path_critic.format(epoch=epoch))
+        }, self.checkpoint_path_critic.format(id=self.id, epoch=epoch))

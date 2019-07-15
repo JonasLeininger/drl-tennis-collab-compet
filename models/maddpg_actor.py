@@ -5,8 +5,9 @@ import torch.nn as nn
 
 class MADDPGActor(nn.Module):
 
-    def __init__(self, config, hidden_units=(512, 256)):
+    def __init__(self, config, hidden_units=(64, 64), seed=48):
         super(MADDPGActor, self).__init__()
+        self.seed = torch.manual_seed(seed)
         self.fc1 = nn.Linear(config.state_dim, hidden_units[0])
         self.bn1 = nn.BatchNorm1d(hidden_units[0])
         self.fc2 = nn.Linear(hidden_units[0], hidden_units[1])

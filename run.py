@@ -9,6 +9,8 @@ def main():
     config = Config()
     agent1 = MADDPGAgent(config, 1)
     agent2 = MADDPGAgent(config, 2)
+    agent1.hard_update_all()
+    agent2.hard_update_all()
     replay = ReplayBuffer(config.buffer_size, config.batch_size)
     print_env_information(config)
     # run_random_env(config)
@@ -51,6 +53,7 @@ def run_random_env(config):
 
 def run_training(config, agent1, agent2, replay):
     l_scores = []
+    l_max_score = []
     for episode in range(config.num_episodes):
         print("Episonde {}/{}".format(episode, config.num_episodes))
         env_info = config.env.reset(train_mode=True)[config.brain_name]
@@ -60,22 +63,19 @@ def run_training(config, agent1, agent2, replay):
             action1 = agent1.act(states[0])
             action2 = agent2.act(states[1])
             actions = np.vstack((action1, action2))
-            # actions = np.clip(actions, -1, 1)
             env_info = config.env.step(actions)[config.brain_name]
             next_states = env_info.vector_observations
             rewards = env_info.rewards
             dones = env_info.local_done
-            # print(rewards)
             scores = np.add(scores, np.asarray(rewards))
-            # print(scores)
 
             replay.add(states[0], states[1],
                        actions[0], actions[1],
                        rewards,
                        next_states[0], next_states[1],
                        dones)
-            if (len(replay.memory) > config.batch_size) and (episode > 300):
-                for _ in range(3):
+            if (len(replay.memory) > config.batch_size): # and (episode > 300):
+                for _ in range(1):
                     train_agents(agent1, agent2, replay)
 
             states = next_states
@@ -86,19 +86,22 @@ def run_training(config, agent1, agent2, replay):
         agent2.noise.reset()
         print(scores)
         l_scores.append(scores)
-        # print("Average score from 20 agents: >> {:.2f} <<".format(scores_agent_mean[-1]))
-        # if (step+1)%10==0:
-        #     self.save_checkpoint(step+1)
-        #     np.save(file="checkpoints/maddpg/maddpg_save_dump.npy", arr=np.asarray(self.scores))
-        #
-        # if (step + 1) >= 100:
-        #     self.mean_of_mean = np.mean(self.scores_agent_mean[-100:])
-        #     print("Mean of the last 100 episodes: {:.2f}".format(self.mean_of_mean))
-        #     if self.mean_of_mean>=0.5:
-        #         print("Solved the environment after {} episodes with a mean of {:.2f}".format(step, self.mean_of_mean))
-        #         np.save(file="checkpoints/maddpg/maddpg_final.npy", arr=np.asarray(self.scores))
-        #         self.save_checkpoint(step+1)
-        #         break
+        l_max_score.append(scores.max())
+        print("Max score this episode from 2 agents: >> {:.2f} <<".format(l_max_score[-1]))
+        if (episode)%20==0:
+            agent1.save_checkpoint(episode)
+            agent2.save_checkpoint(episode)
+            np.save(file="checkpoints/maddpg/maddpg_save_dump.npy", arr=np.asarray(l_scores))
+
+        if (episode) >= 100:
+            mean_of_max = np.mean(l_max_score[-100:])
+            print("Mean of the max for the last 100 episodes: {:.2f}".format(mean_of_max))
+            if mean_of_max >= 0.5:
+                print("Solved the environment after {} episodes with a mean of {:.2f}".format(episode, mean_of_max))
+                np.save(file="checkpoints/maddpg/maddpg_final.npy", arr=np.asarray(l_scores))
+                agent1.save_checkpoint(episode)
+                agent2.save_checkpoint(episode)
+                break
 
 def train_agents(agent1, agent2, replay):
     experience = replay.sample()
@@ -107,7 +110,7 @@ def train_agents(agent1, agent2, replay):
     critic_full_next_action[..., :2] = agent1.actor_target(next_state1)
     critic_full_next_action[..., 2:] = agent1.actor_target(next_state2)
 
-    actor_full_actions = torch.zeros((action1.shape[0], action1.shape[1]*2))
+    actor_full_actions = torch.zeros((action1.shape[0], action1.shape[1]*2)).to(agent1.device)
     actor_full_actions[..., :2] = action1.clone()
     actor_full_actions[..., 2:] = action2.clone()
 
@@ -131,7 +134,7 @@ def train_agents(agent1, agent2, replay):
     critic_full_next_action[..., :2] = agent1.actor_target(next_state1)
     critic_full_next_action[..., 2:] = agent1.actor_target(next_state2)
 
-    actor_full_actions = torch.zeros((action1.shape[0], action1.shape[1]*2))
+    actor_full_actions = torch.zeros((action1.shape[0], action1.shape[1]*2)).to(agent2.device)
     actor_full_actions[..., :2] = action1.clone()
     actor_full_actions[..., 2:] = action2.clone()
 
@@ -149,9 +152,6 @@ def train_agents(agent1, agent2, replay):
     
     agent2.learn(exp_2)
 
-    # agent2.train()
-
-# def train_agent(agent, oponent, )
 
 if __name__=='__main__':
     main()
