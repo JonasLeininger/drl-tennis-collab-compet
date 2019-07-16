@@ -17,6 +17,8 @@ class MADDPGAgent():
         self.id = id
         self.checkpoint_path_actor = "checkpoints/maddpg/cp-actor-{id:02d}-{epoch:04d}.pt"
         self.checkpoint_path_critic = "checkpoints/maddpg/cp-critic-{id:02d}-{epoch:04d}.pt"
+        self.weights_path_actor = "weights/maddpg/cp-actor-{id:02d}-{epoch:04d}.pt"
+        self.weights_path_critic = "weights/maddpg/cp-critic-{id:02d}-{epoch:04d}.pt"
         self.episodes = 2
         self.env_info = None
         self.env_agents = None
@@ -113,3 +115,28 @@ class MADDPGAgent():
             'model_state_dict': self.critic_target.state_dict(),
             'optimizer_state_dict': self.optimizer_critic.state_dict()
         }, self.checkpoint_path_critic.format(id=self.id, epoch=epoch))
+    
+    def load_weights(self, saved_episode: str):
+        checkpoint = torch.load(self.weights_path_actor.format(id=self.id, epoch=saved_episode))
+        self.actor_target.load_state_dict(checkpoint['model_state_dict'])
+        self.optimizer_actor.load_state_dict(checkpoint['optimizer_state_dict'])
+
+        self.actor_target.eval()
+
+        checkpoint = torch.load(self.weights_path_actor.format(id=self.id, epoch=saved_episode))
+        self.actor_local.load_state_dict(checkpoint['model_state_dict'])
+        self.optimizer_actor.load_state_dict(checkpoint['optimizer_state_dict'])
+
+        self.actor_local.eval()
+
+        checkpoint = torch.load(self.weights_path_critic.format(id=self.id, epoch=saved_episode))
+        self.critic_target.load_state_dict(checkpoint['model_state_dict'])
+        self.optimizer_critic.load_state_dict(checkpoint['optimizer_state_dict'])
+
+        self.critic_target.eval()
+
+        checkpoint = torch.load(self.weights_path_critic.format(id=self.id, epoch=saved_episode))
+        self.critic_local.load_state_dict(checkpoint['model_state_dict'])
+        self.optimizer_critic.load_state_dict(checkpoint['optimizer_state_dict'])
+
+        self.critic_local.eval()
