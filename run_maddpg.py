@@ -119,7 +119,7 @@ def train_agents(agent1, agent2, replay):
     actions[..., 2:] = action2.clone()
 
     exp = (state1, state2, actions, pred_actions, rewards, dones, next_state1, next_state2, target_next_action)
-    agent1.learn2(exp)
+    agent1.learn(exp)
 
     experience = replay.sample()
     state1, state2, action1, action2, rewards, next_state1, next_state2, dones = experience
@@ -136,7 +136,7 @@ def train_agents(agent1, agent2, replay):
     actions[..., 2:] = action2.clone()
 
     exp = (state1, state2, actions, pred_actions, rewards, dones, next_state1, next_state2, target_next_action)
-    agent2.learn2(exp)
+    agent2.learn(exp)
 
 if __name__=='__main__':
     main()

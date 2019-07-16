@@ -8,5 +8,5 @@ LearningRateActor: 1e-4
 LearningRateCritic: 1e-4
 BatchesSizeMADDPG: 512
 
-# best until now with lr both 1e-3, batch 512, noise sigma 0.1, hidden layers all 64, tau 1e-2, gamma 0.95
-# current lr both 1e-4, batch 512, noise sigma 0.1, hidden layers all 64, tau 1e-2, gamma 0.95
+# next test with lr both 1e-3, batch 512, noise sigma 0.1, hidden layers all 64, tau 1e-2, gamma 0.95
+# best run lr both 1e-4, batch 512, noise sigma 0.1, hidden layers all 64, tau 1e-2, gamma 0.95
