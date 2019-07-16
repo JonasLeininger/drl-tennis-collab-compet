@@ -38,4 +38,9 @@ Again local and target network have the same structure
 
 ## Results
 
-I managet to solve the environment with a mean of 0.5 for a 100 episode window after 3202 episodes. The saved weights and scores saved as a numpy npy file are in the `weights` folder. I loaded and ploted the results in the report notebook
+I managet to solve the environment with a mean of 0.5 for a 100 episode window after 3204 episodes. The saved weights and scores saved as a numpy npy file are in the `weights` folder. I loaded and ploted the results in the report notebook.
+
+## Further research
+I think that a prioritized experience replay buffer will perform better, because it takes some time for the exploration part of the agent to sample experience with higher play scores.
+Also testing more hyperparameter iterations could be good. 
+Interesting could also be to reduce the information the agent recieve after finding a faster setup.
