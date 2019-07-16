@@ -51,4 +51,8 @@ I created a folder `UnityEnvs/`, and unziped the files into `UnityEnvs/Tennis`.
 
 ## Instructions
 ### First run of the Tennis Environment and Random Behavior
-Follow the instructions in `Tennis.ipynb` to test start the environment with a random behavior episode!  
+Follow the instructions in `Tennis.ipynb` to test start the environment with a random behavior episode!
+
+## Currently working on report
+### Solved Project
+Task solved with MADDPG Algorithm after 3203 episodes. Report in `Report.md` and jupyter notebook `report`.
