@@ -7,8 +7,8 @@ from replay_buffer import ReplayBuffer
 
 def main():
     config = Config()
-    agent1 = MADDPGAgent(config, 1)
-    agent2 = MADDPGAgent(config, 2)
+    agent1 = MADDPGAgent(config, 0)
+    agent2 = MADDPGAgent(config, 1)
     agent1.hard_update_all()
     agent2.hard_update_all()
     replay = ReplayBuffer(config.buffer_size, config.batch_size)
@@ -106,52 +106,37 @@ def run_training(config, agent1, agent2, replay):
 def train_agents(agent1, agent2, replay):
     experience = replay.sample()
     state1, state2, action1, action2, rewards, next_state1, next_state2, dones = experience
-    critic_full_next_action = torch.zeros((action1.shape[0], action1.shape[1]*2))
-    critic_full_next_action[..., :2] = agent1.actor_target(next_state1)
-    critic_full_next_action[..., 2:] = agent2.actor_target(next_state2)
+    target_next_action = torch.zeros((action1.shape[0], action1.shape[1]*2))
+    target_next_action[..., :2] = agent1.actor_target(next_state1)
+    target_next_action[..., 2:] = agent2.actor_target(next_state2)
 
-    actor_full_actions = torch.zeros((action1.shape[0], action1.shape[1]*2)).to(agent1.device)
-    actor_full_actions[..., :2] = action1.clone()
-    actor_full_actions[..., 2:] = action2.clone()
+    pred_actions = torch.zeros((action1.shape[0], action1.shape[1]*2)).to(agent1.device)
+    pred_actions[..., :2] = agent1.actor_local(state1)
+    pred_actions[..., 2:] = action2
 
-    actor_full_actions[..., :2] = agent1.actor_local(state1)
-    
-    full_actions = torch.zeros((action1.shape[0], action1.shape[1]*2))
-    full_actions[..., :2] = action1.clone()
-    full_actions[..., 2:] = action2.clone()
+    actions = torch.zeros((action1.shape[0], action1.shape[1] * 2)).to(agent1.device)
+    actions[..., :2] = action1.clone()
+    actions[..., 2:] = action2.clone()
 
-    agent1_reward = rewards[...,0].view(rewards.shape[0], 1)
-    agent1_dones = dones[...,0].view(rewards.shape[0], 1)
-
-    exp_1 = (state1, state2, actor_full_actions, full_actions, 
-        agent1_reward, agent1_dones, next_state1, next_state2, critic_full_next_action)
-    
-    agent1.learn(exp_1)
+    exp = (state1, state2, actions, pred_actions, rewards, dones, next_state1, next_state2, target_next_action)
+    agent1.learn2(exp)
 
     experience = replay.sample()
     state1, state2, action1, action2, rewards, next_state1, next_state2, dones = experience
-    critic_full_next_action = torch.zeros((action1.shape[0], action1.shape[1]*2))
-    critic_full_next_action[..., :2] = agent1.actor_target(next_state1)
-    critic_full_next_action[..., 2:] = agent2.actor_target(next_state2)
+    target_next_action = torch.zeros((action2.shape[0], action2.shape[1] * 2))
+    target_next_action[..., :2] = agent1.actor_target(next_state1)
+    target_next_action[..., 2:] = agent2.actor_target(next_state2)
 
-    actor_full_actions = torch.zeros((action1.shape[0], action1.shape[1]*2)).to(agent2.device)
-    actor_full_actions[..., :2] = action1.clone()
-    actor_full_actions[..., 2:] = action2.clone()
+    pred_actions = torch.zeros((action1.shape[0], action1.shape[1] * 2)).to(agent2.device)
+    pred_actions[..., :2] = action1
+    pred_actions[..., 2:] = agent2.actor_local(state2)
 
-    actor_full_actions[..., :2] = agent2.actor_local(state2)
-    
-    full_actions = torch.zeros((action1.shape[0], action1.shape[1]*2))
-    full_actions[..., :2] = action1.clone()
-    full_actions[..., 2:] = action2.clone()
+    actions = torch.zeros((action1.shape[0], action1.shape[1] * 2)).to(agent2.device)
+    actions[..., :2] = action1.clone()
+    actions[..., 2:] = action2.clone()
 
-    agent2_reward = rewards[...,1].view(rewards.shape[0], 1)
-    agent2_dones = dones[...,1].view(rewards.shape[0], 1)
-
-    exp_2 = (state1, state2, actor_full_actions, full_actions, 
-        agent2_reward, agent2_dones, next_state1, next_state2, critic_full_next_action)
-    
-    agent2.learn(exp_2)
-
+    exp = (state1, state2, actions, pred_actions, rewards, dones, next_state1, next_state2, target_next_action)
+    agent2.learn2(exp)
 
 if __name__=='__main__':
     main()

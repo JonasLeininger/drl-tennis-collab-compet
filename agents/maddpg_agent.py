@@ -91,6 +91,34 @@ class MADDPGAgent():
 
         self.soft_update_targets()
 
+    def learn2(self, experience):
+        state1, state2, actions, pred_actions, rewards, dones, next_state1, next_state2, target_next_action = experience
+        full_nextstates = torch.zeros((state1.shape[0], state1.shape[1]*2)).to(self.device)
+        full_nextstates[..., :24] = next_state1.clone()
+        full_nextstates[..., 24:] = next_state2.clone()
+
+        full_states = torch.zeros((state1.shape[0], state1.shape[1] * 2)).to(self.device)
+        full_states[..., :24] = state1.clone()
+        full_states[..., 24:] = state2.clone()
+
+        q_targets_next = self.critic_target(full_nextstates, target_next_action.to(self.device))
+        q_targets = rewards[..., self.id].view(rewards.shape[0], 1) + (self.gamma * q_targets_next * (1 - dones[...,self.id].view(rewards.shape[0], 1)))
+        q_expexted = self.critic_local(full_states, actions.to(self.device))
+        critic_loss = F.mse_loss(q_expexted, q_targets)
+
+        self.optimizer_critic.zero_grad()
+        critic_loss.backward()
+        torch.nn.utils.clip_grad_norm_(self.critic_local.parameters(), 1)
+        self.optimizer_critic.step()
+
+        actor_loss = -self.critic_local(full_states, pred_actions.to(self.device)).mean()
+        self.optimizer_actor.zero_grad()
+        actor_loss.backward()
+        self.optimizer_actor.step()
+
+        self.soft_update_targets()
+
+
     def soft_update_targets(self):
         self.soft_update(self.critic_local, self.critic_target)
         self.soft_update(self.actor_local, self.actor_target)
